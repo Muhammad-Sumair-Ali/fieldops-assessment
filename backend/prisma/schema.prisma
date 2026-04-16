@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  output        = "../generated/prisma"
+  moduleFormat  = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String
+  name        String?
+  role        Role     @default(CLIENT)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clientJobs   Job[]    @relation("ClientJobs")
+  technicianJobs Job[]  @relation("TechnicianJobs")
+
+  @@map("users")
+}
+
+model Job {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  status          JobStatus @default(DRAFT)
+  scheduledDate   DateTime?
+  clientId        String
+  technicianId    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  client          User     @relation("ClientJobs", fields: [clientId], references: [id])
+  technician      User?    @relation("TechnicianJobs", fields: [technicianId], references: [id])
+  notes           JobNote[]
+
+  @@map("jobs")
+}
+
+model JobNote {
+  id          String   @id @default(cuid())
+  jobId       String
+  note        String
+  createdBy   String   // user id
+  createdAt   DateTime @default(now())
+
+  job         Job      @relation(fields: [jobId], references: [id])
+
+  @@map("job_notes")
+}
+
+enum Role {
+  ADMIN
+  TECHNICIAN
+  CLIENT
+}
+
+enum JobStatus {
+  DRAFT
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
