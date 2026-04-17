@@ -10,18 +10,20 @@ import { RolesGuard } from '../common/guards/roles/roles.guard';
 @Module({
   imports: [
     PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '24h' },
+    JwtModule.registerAsync({
+      useFactory: async () => ({
+        secret: process.env.JWT_SECRET,
+        signOptions: { expiresIn: '24h' },
+      }),
     }),
   ],
   controllers: [AuthController],
   providers: [
-    AuthService, 
-    JwtStrategy, 
+    AuthService,
+    JwtStrategy,
     PrismaService,
-    RolesGuard,          
+    RolesGuard,
   ],
   exports: [AuthService, JwtModule, RolesGuard],
 })
-export class AuthModule {}
+export class AuthModule { }

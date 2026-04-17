@@ -78,4 +78,26 @@ export class JobsService {
       include: { client: true, technician: true },
     });
   }
-}
+
+  async update(jobId: string, updateData: any) {
+    const job = await this.prisma.job.findUnique({
+      where: { id: jobId },
+    });
+
+    if (!job) throw new NotFoundException('Job not found');
+
+    const data: any = { ...updateData };
+    if (updateData.scheduledDate !== undefined) {
+      data.scheduledDate = updateData.scheduledDate ? new Date(updateData.scheduledDate) : null;
+    }
+    if (updateData.technicianId === '') {
+      data.technicianId = null;
+    }
+
+    return this.prisma.job.update({
+      where: { id: jobId },
+      data,
+      include: { client: true, technician: true },
+    });
+  }
+}

@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Patch, Param, Body, UseGuards, Req } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { CreateJobDto } from './dto/create-job.dto';
+import { UpdateJobDto } from './dto/update-job.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';   // hum isko abhi bana denge
 import { RolesGuard } from '../common/guards/roles/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -20,6 +21,12 @@ export class JobsController {
   findAll(@Req() req: any) {
     const user = req.user;
     return this.jobsService.findAll(user);
+  }
+
+  @Patch(':id')
+  @Roles('ADMIN')
+  update(@Param('id') id: string, @Body() updateJobDto: UpdateJobDto) {
+    return this.jobsService.update(id, updateJobDto);
   }
 
   @Patch(':id/status')
