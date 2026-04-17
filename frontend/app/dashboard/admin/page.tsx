@@ -7,6 +7,7 @@ import { Job, JobCard } from '@/components/jobs/JobCard';
 import { JobForm } from '@/components/jobs/JobForm';
 import { Button } from '@/components/ui/Button';
 import { PlusCircle } from 'lucide-react';
+import { AdminStats } from '@/components/dashboard/AdminStats';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
@@ -62,6 +63,8 @@ export default function AdminDashboardPage() {
           Create New Job
         </Button>
       </div>
+
+      <AdminStats />
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">

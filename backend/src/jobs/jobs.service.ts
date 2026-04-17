@@ -5,7 +5,7 @@ import { JobStatus } from '@prisma/client';
 
 @Injectable()
 export class JobsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(createJobDto: CreateJobDto) {
     // Admin job create 
@@ -66,8 +66,6 @@ export class JobsService {
 
     if (!job) throw new NotFoundException('Job not found');
 
-    // only assigned technician can update status og
-
     if (job.technicianId !== technicianId) {
       throw new ForbiddenException('You can only update your assigned jobs');
     }
@@ -99,5 +97,27 @@ export class JobsService {
       data,
       include: { client: true, technician: true },
     });
+
+
   }
-}
+
+  async getStats() {
+    const [total, draft, scheduled, inProgress, completed, cancelled] = await Promise.all([
+      this.prisma.job.count(),
+      this.prisma.job.count({ where: { status: 'DRAFT' } }),
+      this.prisma.job.count({ where: { status: 'SCHEDULED' } }),
+      this.prisma.job.count({ where: { status: 'IN_PROGRESS' } }),
+      this.prisma.job.count({ where: { status: 'COMPLETED' } }),
+      this.prisma.job.count({ where: { status: 'CANCELLED' } }),
+    ]);
+
+    return {
+      totalJobs: total,
+      draft,
+      scheduled,
+      inProgress,
+      completed,
+      cancelled,
+    };
+  }
+}

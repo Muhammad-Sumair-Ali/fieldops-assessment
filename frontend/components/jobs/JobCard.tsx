@@ -91,13 +91,15 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onStatusChange, onEdit })
 
         {/* Job Details */}
         <div className="grid grid-cols-1 gap-3 text-sm">
-          <div className="flex items-center gap-3">
-            <User className="w-4 h-4 text-gray-500" />
-            <span className="text-gray-600 dark:text-gray-400">Client: <strong>{job.client?.name || 'Unknown'}</strong></span>
-          </div>
+          {user?.role !== 'CLIENT' && (
+            <div className="flex items-center gap-3">
+              <User className="w-4 h-4 text-gray-500" />
+              <span className="text-gray-600 dark:text-gray-400">Client: <strong>{job.client?.name || 'Unknown'}</strong></span>
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <UserCheck className="w-4 h-4 text-gray-500" />
-            <span className="text-gray-600 dark:text-gray-400">Technician: <strong>{job.technician?.name || 'Unassigned'}</strong></span>
+            <span className="text-gray-600 dark:text-gray-400">Technician: <strong>{job.technician?.name || 'Not assigned yet'}</strong></span>
           </div>
           <div className="flex items-center gap-3">
             <Calendar className="w-4 h-4 text-gray-500" />
