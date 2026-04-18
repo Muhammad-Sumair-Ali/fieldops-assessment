@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -30,6 +31,7 @@ interface UserSummary {
 export const JobForm: React.FC<JobFormProps> = ({ job, onSuccess, onCancel }) => {
   const isEdit = !!job;
   const [isLoading, setIsLoading] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(true);
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +52,8 @@ export const JobForm: React.FC<JobFormProps> = ({ job, onSuccess, onCancel }) =>
       } catch (err) {
         console.error('Failed to load users', err);
         setError('Failed to load users for selection');
+      } finally {
+        setUsersLoading(false);
       }
     };
     fetchUsers();
@@ -67,12 +71,23 @@ export const JobForm: React.FC<JobFormProps> = ({ job, onSuccess, onCancel }) =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.title.trim()) {
+      setError('Title is required');
+      return;
+    }
+    if (!formData.clientId) {
+      setError('Please select a client');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
       const payload = {
         ...formData,
+        title: formData.title.trim(),
         scheduledDate: formData.scheduledDate ? new Date(formData.scheduledDate).toISOString() : null,
         technicianId: formData.technicianId || null,
       };
@@ -96,11 +111,11 @@ export const JobForm: React.FC<JobFormProps> = ({ job, onSuccess, onCancel }) =>
   return (
     <form onSubmit={handleSubmit} className="space-y-4 text-left">
       {error && (
-        <div className="bg-red-50 text-red-700 p-3 rounded-md text-sm mb-4">
+        <div className="bg-red-50 text-red-700 p-3 rounded-md text-sm mb-4 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
-      
+
       <Input
         label="Title"
         name="title"
@@ -120,7 +135,7 @@ export const JobForm: React.FC<JobFormProps> = ({ job, onSuccess, onCancel }) =>
           rows={3}
           value={formData.description}
           onChange={handleChange}
-          placeholder="Job descriptions and notes"
+          placeholder="Job description and notes"
         />
       </div>
 
@@ -130,6 +145,7 @@ export const JobForm: React.FC<JobFormProps> = ({ job, onSuccess, onCancel }) =>
         name="scheduledDate"
         value={formData.scheduledDate}
         onChange={handleChange}
+        min={new Date().toISOString().slice(0, 16)}
       />
 
       <Select
@@ -138,8 +154,8 @@ export const JobForm: React.FC<JobFormProps> = ({ job, onSuccess, onCancel }) =>
         required
         value={formData.clientId}
         onChange={handleChange}
-        options={clients}
-        disabled={isEdit}
+        options={usersLoading ? [] : clients}
+        disabled={isEdit || usersLoading}
       />
 
       <Select
@@ -147,7 +163,8 @@ export const JobForm: React.FC<JobFormProps> = ({ job, onSuccess, onCancel }) =>
         name="technicianId"
         value={formData.technicianId}
         onChange={handleChange}
-        options={[{ label: 'Unassigned', value: '' }, ...technicians]}
+        options={usersLoading ? [] : [{ label: 'Unassigned', value: '' }, ...technicians]}
+        disabled={usersLoading}
       />
 
       <Select
@@ -160,15 +177,15 @@ export const JobForm: React.FC<JobFormProps> = ({ job, onSuccess, onCancel }) =>
           { label: 'Scheduled', value: 'SCHEDULED' },
           { label: 'In Progress', value: 'IN_PROGRESS' },
           { label: 'Completed', value: 'COMPLETED' },
-          { label: 'Cancelled', value: 'CANCELLED' }
+          { label: 'Cancelled', value: 'CANCELLED' },
         ]}
       />
 
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit" isLoading={isLoading}>
+        <Button type="submit" isLoading={isLoading} disabled={isLoading || usersLoading}>
           {isEdit ? 'Update Job' : 'Create Job'}
         </Button>
       </div>
