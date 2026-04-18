@@ -25,7 +25,13 @@ export default function LoginPage() {
       const { access_token, user } = response.data;
       login(access_token, user);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid email or password');
+      if (!err.response || err.code === 'ERR_NETWORK') {
+        setError('Server is unreachable. Please try again later.');
+      } else if (err.response.status === 401) {
+        setError('Invalid email or password.');
+      } else {
+        setError(err.response.data?.message || 'Something went wrong. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

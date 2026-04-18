@@ -70,20 +70,28 @@ export class JobsService {
       throw new ForbiddenException('You can only update your assigned jobs');
     }
 
-    return this.prisma.job.update({
+    const oldStatus = job.status;
+    const updatedJob = await this.prisma.job.update({
       where: { id: jobId },
       data: { status: status as JobStatus },
       include: { client: true, technician: true },
     });
+
+    if (oldStatus !== status) {
+      await this.logActivity(jobId, 'Status Changed', technicianId, oldStatus, status);
+    }
+
+    return updatedJob;
   }
 
-  async update(jobId: string, updateData: any) {
+  async update(jobId: string, updateData: any, adminId: string) {
     const job = await this.prisma.job.findUnique({
       where: { id: jobId },
     });
 
     if (!job) throw new NotFoundException('Job not found');
 
+    const oldStatus = job.status;
     const data: any = { ...updateData };
     if (updateData.scheduledDate !== undefined) {
       data.scheduledDate = updateData.scheduledDate ? new Date(updateData.scheduledDate) : null;
@@ -92,13 +100,52 @@ export class JobsService {
       data.technicianId = null;
     }
 
-    return this.prisma.job.update({
+    const updatedJob = await this.prisma.job.update({
       where: { id: jobId },
       data,
       include: { client: true, technician: true },
     });
 
+    if (updateData.status && oldStatus !== updateData.status) {
+      await this.logActivity(jobId, 'Status Changed', adminId, oldStatus, updateData.status);
+    } else if (updateData.technicianId !== undefined && job.technicianId !== updatedJob.technicianId) {
+      await this.logActivity(jobId, 'Technician Reassigned', adminId, job.technicianId || 'Unassigned', updatedJob.technicianId || 'Unassigned');
+    }
 
+    return updatedJob;
+  }
+
+  async logActivity(jobId: string, action: string, changedBy: string, oldValue?: string, newValue?: string) {
+    return this.prisma.jobLog.create({
+      data: {
+        jobId,
+        action,
+        changedBy,
+        oldValue: oldValue?.toString(),
+        newValue: newValue?.toString(),
+      },
+    });
+  }
+
+  async getJobLogs(jobId: string) {
+    const logs = await this.prisma.jobLog.findMany({
+      where: { jobId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Fetch user names for the 'changedBy' field
+    const userIds = [...new Set(logs.map(log => log.changedBy))];
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true },
+    });
+
+    const userMap = new Map(users.map(u => [u.id, u.name || 'Unknown User']));
+
+    return logs.map(log => ({
+      ...log,
+      userName: userMap.get(log.changedBy),
+    }));
   }
 
   async getStats() {

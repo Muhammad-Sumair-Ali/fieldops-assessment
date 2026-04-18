@@ -4,8 +4,8 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client-js"
-  moduleFormat  = "cjs"
+  provider     = "prisma-client-js"
+  moduleFormat = "cjs"
 }
 
 datasource db {
@@ -13,46 +13,48 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  password    String
-  name        String?
-  role        Role     @default(CLIENT)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  clientJobs   Job[]    @relation("ClientJobs")
-  technicianJobs Job[]  @relation("TechnicianJobs")
+  clientJobs     Job[] @relation("ClientJobs")
+  technicianJobs Job[] @relation("TechnicianJobs")
 
   @@map("users")
 }
 
 model Job {
-  id              String   @id @default(cuid())
-  title           String
-  description     String?
-  status          JobStatus @default(DRAFT)
-  scheduledDate   DateTime?
-  clientId        String
-  technicianId    String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  status        JobStatus @default(DRAFT)
+  scheduledDate DateTime?
+  clientId      String
+  technicianId  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  client          User     @relation("ClientJobs", fields: [clientId], references: [id])
-  technician      User?    @relation("TechnicianJobs", fields: [technicianId], references: [id])
-  notes           JobNote[]
+  client     User      @relation("ClientJobs", fields: [clientId], references: [id])
+  technician User?     @relation("TechnicianJobs", fields: [technicianId], references: [id])
+  notes      JobNote[]
+
+  logs JobLog[]
 
   @@map("jobs")
 }
 
 model JobNote {
-  id          String   @id @default(cuid())
-  jobId       String
-  note        String
-  createdBy   String   // user id
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  jobId     String
+  note      String
+  createdBy String // user id
+  createdAt DateTime @default(now())
 
-  job         Job      @relation(fields: [jobId], references: [id])
+  job Job @relation(fields: [jobId], references: [id])
 
   @@map("job_notes")
 }
@@ -69,4 +71,18 @@ enum JobStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+model JobLog {
+  id        String   @id @default(cuid())
+  jobId     String
+  action    String // e.g. "Status Changed", "Job Created", "Reassigned"
+  oldValue  String?
+  newValue  String?
+  changedBy String // user id
+  createdAt DateTime @default(now())
+
+  job Job @relation(fields: [jobId], references: [id])
+
+  @@map("job_logs")
 }

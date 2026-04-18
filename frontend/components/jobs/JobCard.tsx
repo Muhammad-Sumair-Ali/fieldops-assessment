@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/Button';
 import { Calendar, User, UserCheck, Edit2, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { format } from 'date-fns';
+import { Modal } from '@/components/ui/Modal';
+import { JobTimeline } from './JobTimeline';
+import { Activity } from 'lucide-react';
 
 export interface Job {
   id: string;
@@ -43,6 +46,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onStatusChange, onEdit })
   const { user } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(job.status);
+  const [showTimeline, setShowTimeline] = useState(false);
 
   const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value;
@@ -139,17 +143,38 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onStatusChange, onEdit })
           </div>
         )}
 
-        {/* Admin Edit Button */}
-        {user?.role === 'ADMIN' && onEdit && (
-          <Button 
-            onClick={() => onEdit(job)} 
-            variant="outline" 
-            className="w-full mt-2"
-          >
-            <Edit2 className="w-4 h-4 mr-2" />
-            Edit Job
-          </Button>
-        )}
+        {/* Admin Edit & View Activity Buttons */}
+        <div className="flex flex-col gap-2 mt-2">
+          {(user?.role === 'ADMIN' || user?.role === 'TECHNICIAN') && (
+            <Button 
+              onClick={() => setShowTimeline(true)} 
+              variant="outline" 
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <Activity className="w-4 h-4" />
+              View Activity
+            </Button>
+          )}
+
+          {user?.role === 'ADMIN' && onEdit && (
+            <Button 
+              onClick={() => onEdit(job)} 
+              className="w-full"
+            >
+              <Edit2 className="w-4 h-4 mr-2" />
+              Edit Job
+            </Button>
+          )}
+        </div>
+
+        {/* Timeline Modal */}
+        <Modal 
+          isOpen={showTimeline} 
+          onClose={() => setShowTimeline(false)} 
+          title={`Activity History: ${job.title}`}
+        >
+          <JobTimeline jobId={job.id} />
+        </Modal>
       </CardContent>
     </Card>
   );

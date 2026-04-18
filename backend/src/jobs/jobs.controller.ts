@@ -25,8 +25,14 @@ export class JobsController {
 
   @Patch(':id')
   @Roles('ADMIN')
-  update(@Param('id') id: string, @Body() updateJobDto: UpdateJobDto) {
-    return this.jobsService.update(id, updateJobDto);
+  update(@Param('id') id: string, @Body() updateJobDto: UpdateJobDto, @Req() req: any) {
+    return this.jobsService.update(id, updateJobDto, req.user.id);
+  }
+
+  @Get(':id/logs')
+  @Roles('ADMIN', 'TECHNICIAN')
+  getLogs(@Param('id') id: string) {
+    return this.jobsService.getJobLogs(id);
   }
 
   @Patch(':id/status')

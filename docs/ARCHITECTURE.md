@@ -41,7 +41,7 @@ The application follows a **monorepo** structure with clear separation between f
 **Main Entities:**
 - `User` (id, email, password, name, role)
 - `Job` (id, title, description, status, scheduledDate, clientId, technicianId)
-- `JobNote` (future scope)
+- `JobLog` (id, jobId, userId, action, oldValue, newValue, createdAt)
 
 **Key Relationships:**
 - One-to-Many: User → Jobs (as client)
@@ -62,18 +62,32 @@ The application follows a **monorepo** structure with clear separation between f
   - Technician: Can only update status of assigned jobs
   - Client: Can only view their own jobs
 
+## Bonus Features Implemented
+
+### Job Activity Timeline
+Implemented a chronological activity log for each job (`JobLog` table).
+
+- **Backend**: `logActivity()` helper records every status change and
+  reassignment automatically. `GET /jobs/:id/logs` endpoint returns
+  full history with user names, restricted to Admin and Technician roles.
+
+- **Frontend**: Reusable `Modal` component with backdrop blur + escape-key
+  support. `JobTimeline` component renders logs in reverse-chronological
+  order with color-coded status badges and `date-fns` relative timestamps.
+
+- **DB**: `JobLog` entity linked to both `Job` and `User` with `action`,
+  `oldValue`, `newValue`, and `createdAt` fields.
+
+
 ## What I Deliberately Chose NOT to Build
 
-1. **Job Notes / Activity Timeline**  
-   Reason: Time constraint. Focused on core job flow first.
-
-2. **Background Notifications / Email**  
+1. **Background Notifications / Email**  
    Reason: Not critical for core functionality. Can be added using BullMQ later.
 
-3. **Pagination & Advanced Filtering**  
+2. **Pagination & Advanced Filtering**  
    Reason: Kept scope minimal to deliver a working end-to-end flow.
 
-4. **Docker Setup**  
+3. **Docker Setup**  
    Reason: Prioritized functionality and documentation over bonus tasks.
 
 ## Assumptions Made
@@ -94,10 +108,8 @@ The application follows a **monorepo** structure with clear separation between f
 ## Future Enhancements
 
 - Implement audit logging
-- Add job activity timeline
 - Background notification queue
 - Soft deletes with restore
 - Docker + docker-compose
 - Proper client-facing portal
 
----
